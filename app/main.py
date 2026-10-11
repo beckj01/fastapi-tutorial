@@ -46,7 +46,7 @@ app.include_router(vote.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the API homepage"}
+    return {"message": "Welcome to the API homepage!"}
 
 # to run app type into terminal: uvicorn app.main:app --reload
 # <folder>.<filename>:<FastAPI object name> --reload (the reload property tells the app to reload each time code is changed, without needing to stop & re-start the local server)
