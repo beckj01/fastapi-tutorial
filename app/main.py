@@ -7,10 +7,10 @@ from .routers import post, user, auth, vote
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
-# TUTORIAL up to 12:40 ******
+# TUTORIAL up to 17:10 ******
 
 # create database tables if they do not exist
-#models.Base.metadata.create_all(bind=engine) #<- when using alembic, you don't need this line of code
+# models.Base.metadata.create_all(bind=engine) #<- when using alembic, you don't need this line of code
 
 app = FastAPI()
 
