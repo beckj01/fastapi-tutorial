@@ -35,6 +35,13 @@ class UserCreate(BaseModel):
     display_name: Optional[str] = None
     pc_name: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    email: EmailStr
+    username: Optional[str] = None
+    short_name: Optional[str] = None
+    display_name: Optional[str]  = None
+    pc_name: Optional[str] = None
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
