@@ -28,6 +28,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
+    username = Column(String)
+    pc_name = Column(String)
     short_name = Column(String)
     display_name = Column(String)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))

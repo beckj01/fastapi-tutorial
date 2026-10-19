@@ -21,11 +21,19 @@ def test_create_user_basic(client):
     assert res.status_code == 201
 
 def test_create_user_all_fields(client):
-    res = client.post("/users", json={"email": "testuser@gmail.com", "password": "pwd999", "short_name": "TU", "display_name": "Test User"})
+    data = {"email": "testuser@gmail.com", 
+            "password": "pwd999", 
+            "username": "tuser",
+            "short_name": "TU", 
+            "display_name": "Test User",
+            "pc_name": "IO1234"}
+    res = client.post("/users", json=data)
     new_user = schemas.UserResponse(**res.json())
     assert new_user.email == "testuser@gmail.com"
     assert new_user.short_name == "TU"
     assert new_user.display_name == "Test User"
+    assert new_user.username == "tuser"
+    assert new_user.pc_name == "IO1234"
     assert res.status_code == 201
 
 def test_login_user(client, test_user):

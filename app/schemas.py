@@ -30,14 +30,18 @@ class PostOut(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    username: Optional[str] = None
     short_name: Optional[str] = None
     display_name: Optional[str] = None
+    pc_name: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    username: Optional[str] = None
     short_name: Optional[str] = None
     display_name: Optional[str] = None
+    pc_name: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -59,3 +63,11 @@ class TokenData(BaseModel):
 class Vote(BaseModel):
     post_id: int
     direction: int
+
+
+# Notes:
+# age: Optional[int] = None - This field is NOT required, if omitted detaults to None
+# age: Optional[int]        - This field is REQUIRED to be present, but the value can be None
+# age: int                  - this field is REQUIRED and cannot be None
+#
+#
