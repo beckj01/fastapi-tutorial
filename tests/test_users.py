@@ -12,7 +12,7 @@ def test_root(client):
     assert res.status_code == 200
 
 
-def test_create_user(client):
+def test_create_user_basic(client):
     res = client.post("/users", json={"email": "testuser1@gmail.com", "password": "pwd999"})
 
     # pydantic will verify the right fields were returned, however will not check any of the values themselves
@@ -20,6 +20,13 @@ def test_create_user(client):
     assert new_user.email == "testuser1@gmail.com"
     assert res.status_code == 201
 
+def test_create_user_all_fields(client):
+    res = client.post("/users", json={"email": "testuser@gmail.com", "password": "pwd999", "short_name": "TU", "display_name": "Test User"})
+    new_user = schemas.UserResponse(**res.json())
+    assert new_user.email == "testuser@gmail.com"
+    assert new_user.short_name == "TU"
+    assert new_user.display_name == "Test User"
+    assert res.status_code == 201
 
 def test_login_user(client, test_user):
     res = client.post("/login", data={"username": test_user["email"], "password": test_user["password"]})

@@ -30,10 +30,14 @@ class PostOut(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    short_name: Optional[str] = None
+    display_name: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    short_name: Optional[str] = None
+    display_name: Optional[str] = None
     created_at: datetime
 
     class Config:

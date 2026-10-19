@@ -7,7 +7,6 @@ from .routers import post, user, auth, vote
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
-# TUTORIAL up to 17:57 ******
 
 # create database tables if they do not exist
 # models.Base.metadata.create_all(bind=engine) #<- when using alembic, you don't need this line of code
@@ -23,7 +22,6 @@ app = FastAPI()
 #     "http://localhost", 
 #     "http://localhost:8000"
 # ]
-
 # or you can set it to be public to any domain can access the API
 origins = ["*"]
 
@@ -46,7 +44,7 @@ app.include_router(vote.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the JB fastAPI homepage - testing CD/CI pipeline"}
+    return {"message": "Welcome to the JB fastAPI homepage"}
 
 # to run app type into terminal: uvicorn app.main:app --reload
 # <folder>.<filename>:<FastAPI object name> --reload (the reload property tells the app to reload each time code is changed, without needing to stop & re-start the local server)

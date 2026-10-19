@@ -49,7 +49,7 @@ def client(session): # this will cause the session fixture to run before the cli
 
 @pytest.fixture()
 def test_user(client):
-    user_data = {"email": "testuser1@gmail.com", "password": "pwd999"}
+    user_data = {"email": "testuser1@gmail.com", "password": "pwd999", "short_name": "TU", "display_name": "Test User"}
     res = client.post("/users", json=user_data)
     
     assert res.status_code == 201
@@ -59,7 +59,7 @@ def test_user(client):
 
 @pytest.fixture()
 def test_user2(client):
-    user_data = {"email": "testuser2@gmail.com", "password": "pwd999"}
+    user_data = {"email": "testuser2@gmail.com", "password": "pwd999", "short_name": "TU2", "display_name": "Test User 2"}
     res = client.post("/users", json=user_data)
     
     assert res.status_code == 201
