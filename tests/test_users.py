@@ -2,7 +2,7 @@ from app import schemas
 import pytest
 from jose import jwt
 from app.config import settings
-
+from app.oauth2 import create_access_token
 
 
 
@@ -101,3 +101,29 @@ def test_unauthorized_user_update_profile(client, test_user):
                 "pc_name": "IO4444"}
     res = client.put(f"/users/{test_user["id"]}", json=data)
     assert res.status_code == 401
+
+
+def test_admin_assigning_permission(authorized_admin_client, admin_user, test_user):
+    data = {"name": "admin"}
+    res = authorized_admin_client.post(f"/users/{test_user["id"]}/permissions", json=data)
+    assert res.status_code == 201
+
+def test_user_profile_access_assigning_permission(client, create_user_with_permission, test_user):
+    # create a user with "user_profile" permission, then generate token for this user
+    user_with_perm = create_user_with_permission("user_profiles", email="permuser@gmail.com")
+    token = create_access_token({"user_id": user_with_perm["id"]})
+    client.headers = {**client.headers, "Authorization": f"Bearer {token}"}
+
+    data = {"name": "admin"}
+    res = client.post(f"/users/{test_user["id"]}/permissions", json=data)
+    assert res.status_code == 201
+
+def test_unauthorized_user_assigning_permissions(client, test_user, test_user2):
+    data = {"name": "admin"}
+    res = client.post(f"/users/{test_user2["id"]}/permissions", json=data)
+    assert res.status_code == 401
+
+def test_authorised_non_admin_assigning_permissions(authorized_client, test_user, test_user2):
+    data = {"name": "admin"}
+    res = authorized_client.post(f"/users/{test_user2["id"]}/permissions", json=data)
+    assert res.status_code == 404

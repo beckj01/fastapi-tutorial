@@ -2,8 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from fastapi.testclient import TestClient
-from app.main import app
+from app.main import app, DEFAULT_PERMISSIONS
 from app.config import settings
+from app.utils import hash_password
 from app.database import get_db, Base
 from app.oauth2 import create_access_token
 from app import models
@@ -69,8 +70,70 @@ def test_user2(client):
 
 
 @pytest.fixture()
+def admin_user(client, session):
+    # create permissions
+    for perm_name in DEFAULT_PERMISSIONS:
+        exist_perm = session.query(models.Permission).filter(models.Permission.name == perm_name).first()
+        if not exist_perm:
+            new_perm = models.Permission(name=perm_name)
+            session.add(new_perm)
+
+    session.commit()
+
+    # create admin user & assign admin permissions    
+    admin_user = models.User(
+        email = "admin@gmail.com", 
+        password = hash_password("pwd999")
+    )
+    admin_perm = session.query(models.Permission).filter(models.Permission.name == "admin").first()
+    admin_user.permissions.append(admin_perm)
+    session.add(admin_user)
+    session.commit()
+    session.refresh(admin_user)
+
+    res = client.get(f"/users/{admin_user.id}")
+    assert res.status_code == 200
+    admin_user = res.json()
+    return admin_user
+
+
+# note this is a fixture factory - a fixture that returns a function, allowing you to 
+#   generate a user with any permission within the testing function
+#   rather than writting a fixture for each permission
+@pytest.fixture()
+def create_user_with_permission(client, session):
+    def _create_user(permission_name: str, email: str):
+        for perm_name in DEFAULT_PERMISSIONS:
+            exist_perm = session.query(models.Permission).filter(models.Permission.name == perm_name).first()
+            if not exist_perm:
+                session.add(models.Permission(name=perm_name))
+        session.commit()
+
+        user = models.User(
+            email=email, 
+            password = hash_password("pdw999")
+        )
+        perm = session.query(models.Permission).filter(models.Permission.name == permission_name).first()
+        if perm:
+            user.permissions.append(perm)
+
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+
+        res = client.get(f"/users/{user.id}")
+        return res.json()
+
+    return _create_user
+
+
+@pytest.fixture()
 def token(test_user):
     return create_access_token({"user_id": test_user["id"]})
+
+@pytest.fixture()
+def admin_token(admin_user):
+    return create_access_token({"user_id": admin_user["id"]})
 
 
 @pytest.fixture()
@@ -81,6 +144,13 @@ def authorized_client(client, token):
     }
     return client
 
+@pytest.fixture()
+def authorized_admin_client(client, admin_token):
+    client.headers = {
+        **client.headers, 
+        "Authorization": f"Bearer {admin_token}"
+    }
+    return client
 
 
 @pytest.fixture()

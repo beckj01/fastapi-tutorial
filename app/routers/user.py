@@ -11,7 +11,7 @@ router = APIRouter(
 # the keyword @app is replaced with @router as we are using the fastAPI router, to connect this route to the main.py file where app is stored
 
 
-@router.get("/", response_model=List[schemas.UserResponse])
+@router.get("/", response_model=List[schemas.UserResponsePermissions])
 def get_users(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     users = db.query(models.User).order_by(models.User.id).all()
     return users
@@ -58,3 +58,32 @@ def update_user(id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)
     db.commit()
 
     return update_query.first()
+
+
+@router.post("/{id}/permissions", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponsePermissions)
+def add_permission_to_user(id: int, permission: schemas.PermissionCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+    user = db.query(models.User).filter(models.User.id==id).first()
+    perm = db.query(models.Permission).filter(models.Permission.name == permission.name).first()
+
+    # check if logged in user has permission to add user permissions
+    current_user_permissions = [p.name for p in current_user.permissions]
+    if not "admin" in current_user_permissions and not "user_profiles" in current_user_permissions:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You do not have the required permissions to assign permissions.")
+
+    # check if target user exists
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} does not exist.")
+        
+    # check if the permission exists
+    if not perm:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Permission {permission.name} does not exist.")
+
+    # check if user already has this permission assigned
+    if perm in user.permissions:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User already has the {permission.name} permission")
+
+    # add the permission
+    user.permissions.append(perm)
+    db.commit()
+
+    return user

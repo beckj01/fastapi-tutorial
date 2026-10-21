@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 # these are the pydantic models for data validation into & out of the database
 
@@ -54,6 +54,11 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserResponsePermissions(UserResponse):
+    permissions: List[PermissionResponse] = []
+    
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -66,6 +71,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
+
+
+class PermissionCreate(BaseModel):
+    name: str
+
+class PermissionResponse(BaseModel):
+    name: str
+
+    class Config:
+        from_attributes = True # allows Pydantic to read SQLAlchemy models
+
 
 class Vote(BaseModel):
     post_id: int

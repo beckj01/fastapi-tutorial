@@ -22,6 +22,13 @@ def getusermeta():
     print(f"Hostname: {hostname}")
 
 
+
+def test_lists():
+    #perms = ["admin", "user", "read", "planner"]
+    perms = []
+
+    if not "admin" in perms and not "user" in perms:
+        print("you do not have access")
+
 if __name__ == "__main__":
-    #learnDateTime()
-    getusermeta()
+    test_lists()

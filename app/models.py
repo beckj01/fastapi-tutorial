@@ -1,10 +1,19 @@
 from .database import Base
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
 
 # these are the ORM managed database table definitions
+
+
+# association table for the user - permission many-to-many relationship
+user_permissions = Table(
+    "user_permissions", 
+    Base.metadata, 
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True), 
+    Column("permission_id", Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True)
+)
 
 class Post(Base):
     __tablename__ = "posts"
@@ -33,7 +42,15 @@ class User(Base):
     short_name = Column(String)
     display_name = Column(String)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
-    phone_number = Column (String)
+
+    permissions = relationship("Permission", secondary=user_permissions, backref="users")
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, unique=True, nullable=False)
 
 
 class Vote(Base):
