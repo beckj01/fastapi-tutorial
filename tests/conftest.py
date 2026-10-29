@@ -9,6 +9,7 @@ from app.database import get_db, Base
 from app.oauth2 import create_access_token
 from app import models
 import pytest
+from datetime import datetime, timezone
 
 # override to use a testing database
 SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}_test"
@@ -180,3 +181,30 @@ def test_posts(test_user, test_user2, session):
     session.commit()
     session.query(models.Post).all()
     return posts
+
+@pytest.fixture()
+def test_qtys(test_user, session):
+    qty1 = models.Qty(name="Train Drivers Trained", UoM="people", area="Training", owner_id=test_user["id"])
+    qty2 = models.Qty(name="Rail Controllers Trained", UoM="people", area="Training", owner_id=test_user["id"])
+    qty3 = models.Qty(name="Maintainers Trained", UoM="people", area="Training", owner_id=test_user["id"])
+
+    qtys = [qty1, qty2, qty3]
+
+    session.add_all(qtys)
+    session.commit()
+    
+
+    entry1 = models.QtyEntry(qty_id=qty1.id, we_date=datetime(2026, 10, 25, tzinfo=timezone.utc), 
+                             cumulative_plan=10, cumulative_actual=8)
+    entry2 = models.QtyEntry(qty_id=qty1.id, we_date=datetime(2026, 11, 2, tzinfo=timezone.utc), 
+                             cumulative_plan=20, cumulative_actual=14)
+
+    session.add_all([entry1, entry2])
+    session.commit()
+
+    # refresh instances to ensure relationship attributes are fresh
+    for qty in qtys:
+        session.refresh(qty)
+
+    return qtys
+

@@ -17,7 +17,7 @@ def get_users(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
     return users
     
 
-@router.get("/{id}", response_model=schemas.UserResponse)
+@router.get("/{id}", response_model=schemas.UserResponsePermissions)
 def get_user(id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id==id).first()
 
@@ -59,6 +59,29 @@ def update_user(id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)
 
     return update_query.first()
 
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(id:int, db:Session=Depends(get_db), current_user:int=Depends(oauth2.get_current_user)):
+    user_query = db.query(models.User).filter(models.User.id==id)
+    user = user_query.first()
+
+    # check if user has permission to delete another user
+    current_user_permissions = [p.name for p in current_user.permissions]
+    if not "admin" in current_user_permissions and not "user_profiles" in current_user_permissions:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You do not have the required permissions to delete another user.")
+    
+    # check if user to be deleted exists
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} does not exist.")
+
+    # check the user is not attempting to delete themselves. not allowed to pervent a database lockout where the final admin removes themselves
+    if current_user.id == id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="You cannot delete yourself from this database.")    
+
+    # delete the specified user
+    user_query.delete(synchronize_session=False)
+    db.commit()
+    return
+
 
 @router.post("/{id}/permissions", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponsePermissions)
 def add_permission_to_user(id: int, permission: schemas.PermissionCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
@@ -68,7 +91,7 @@ def add_permission_to_user(id: int, permission: schemas.PermissionCreate, db: Se
     # check if logged in user has permission to add user permissions
     current_user_permissions = [p.name for p in current_user.permissions]
     if not "admin" in current_user_permissions and not "user_profiles" in current_user_permissions:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You do not have the required permissions to assign permissions.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You do not have the required permissions to assign permissions.")
 
     # check if target user exists
     if user == None:
@@ -85,5 +108,35 @@ def add_permission_to_user(id: int, permission: schemas.PermissionCreate, db: Se
     # add the permission
     user.permissions.append(perm)
     db.commit()
+
+    return user
+
+
+@router.delete("/{id}/permissions/{perm_name}", response_model=schemas.UserResponsePermissions)
+def delete_permission_from_user(id:int, perm_name:str, db:Session=Depends(get_db), current_user:int=Depends(oauth2.get_current_user)):
+    user = db.query(models.User).filter(models.User.id==id).first()
+    perm = db.query(models.Permission).filter(models.Permission.name==perm_name).first()
+
+    # check if user has admin or user_profile permission
+    user_perms = [p.name for p in current_user.permissions]
+    if not "admin" in user_perms and not "user_profiles" in user_perms:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"You do not have the required permissions to remove permissions.")
+
+    # check if user exists
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} does not exist.")
+
+    # check if permission exists
+    if perm == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The permission named '{perm_name}' does not exist.")
+
+    # check if user has the permission to be deleted actually assigned 
+    if perm not in user.permissions:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The user {id} does not have permission {perm_name} assigned, hence it cannot be deleted.")
+
+    # delete the permission
+    user.permissions.remove(perm)
+    db.commit()
+    db.refresh(user)
 
     return user

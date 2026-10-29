@@ -22,7 +22,6 @@ def getusermeta():
     print(f"Hostname: {hostname}")
 
 
-
 def test_lists():
     #perms = ["admin", "user", "read", "planner"]
     perms = []
@@ -30,5 +29,11 @@ def test_lists():
     if not "admin" in perms and not "user" in perms:
         print("you do not have access")
 
+def test_set():
+    dict1 = {"name": "jon", "age": 38}
+
+    dict1["height"] = 171
+    print(dict1)
+
 if __name__ == "__main__":
-    test_lists()
+    test_set()

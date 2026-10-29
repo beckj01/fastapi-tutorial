@@ -88,6 +88,62 @@ class Vote(BaseModel):
     direction: int
 
 
+class QtyEntryCreate(BaseModel):
+    we_date: datetime
+    cumulative_plan: float = 0
+    period_plan: float = 0
+    cumulative_actual: float = 0
+    period_actual: float = 0
+    cumulative_forecast: float = 0
+    period_forecast: float = 0
+
+class QtyEntryUpdate(BaseModel):
+    we_date: Optional[datetime] = None
+    cumulative_plan: Optional[float] = None
+    period_plan: Optional[float] = None
+    cumulative_actual: Optional[float] = None
+    period_actual: Optional[float] = None
+    cumulative_forecast: Optional[float] = None
+    period_forecast: Optional[float] = None
+
+class QtyEntryResponse(QtyEntryCreate):
+    id: int
+    qty_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class QtyCreate(BaseModel):
+    name: str
+    UoM: str
+    area: Optional[str] = None
+    owner_id: Optional[int] = None
+    parent_id: Optional[int] = None
+
+class QtyUpdate(BaseModel):
+    name: Optional[str] = None
+    UoM: Optional[str] = None
+    area: Optional[str] = None
+    owner_id: Optional[int] = None
+    parent_id: Optional[int] = None
+
+class QtyResponse(BaseModel):
+    id: int
+    name: str
+    UoM: str
+    area: Optional[str] = None
+    owner_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    entries: List[QtyEntryResponse] = []
+    children: List["QtyResponse"] = []
+
+    class Config:
+        from_attributes = True # allows Pydantic to read SQLAlchemy models
+
+# required for Pydantic v2 recursive self-referencing models
+QtyResponse.model_rebuild()
+
 # Notes:
 # age: Optional[int] = None - This field is NOT required, if omitted detaults to None
 # age: Optional[int]        - This field is REQUIRED to be present, but the value can be None

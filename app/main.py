@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from . import models
 from .database import engine, SessionLocal
-from .routers import post, user, auth, vote
+from .routers import post, user, auth, vote, qty
 from .config import settings
 from .utils import hash_password
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # models.Base.metadata.create_all(bind=engine) #<- when using alembic, you don't need this line of code
 
 # default application permissions
-DEFAULT_PERMISSIONS = ["admin", "read", "user_profiles", "planner", "metric"]
+DEFAULT_PERMISSIONS = ["admin", "read", "user_profiles", "planner", "qty"]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -94,6 +94,7 @@ app.include_router(post.router)
 app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(vote.router)
+app.include_router(qty.router)
 
 
 @app.get("/")

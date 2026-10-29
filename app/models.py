@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Table
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Table, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
@@ -59,5 +59,38 @@ class Vote(Base):
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, nullable=False)
 
+class Qty(Base):
+    __tablename__ = "quantities"
 
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+    UoM = Column(String, nullable=False)
+    area = Column(String)
 
+    # foreign key to user table for person responsible
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    owner = relationship("User")
+
+    # self referencing foreign key for groupings
+    parent_id = Column(Integer, ForeignKey("quantities.id", ondelete="CASCADE"), nullable=True)
+    parent = relationship("Qty", remote_side=[id], backref="children")
+
+    # relationship to the time-distributed data
+    entries = relationship("QtyEntry", back_populates="quantity", cascade="all, delete-orphan")
+
+class QtyEntry(Base):
+    __tablename__ = "quantity_entries"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    qty_id = Column(Integer, ForeignKey("quantities.id", ondelete="CASCADE"), nullable=False)
+    we_date = Column(TIMESTAMP(timezone=True), nullable=False)
+
+    cumulative_plan = Column(Float, default=0)
+    period_plan = Column(Float, default=0)
+    cumulative_actual = Column(Float, default=0)
+    period_actual = Column(Float, default=0)
+    cumulative_forecast = Column(Float, default=0)
+    period_forecast = Column(Float, default=0)
+
+    # back-reference relationship
+    quantity = relationship("Qty", back_populates="entries")
